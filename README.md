@@ -38,18 +38,7 @@ Delete `roster.db` and re-run to reset to fresh demo data.
    **publish** a roster with any shift still below minimum is **blocked** — the publish
    button lists exactly which shift/date combinations are short.
 
-## Demo script (matches the M4 milestone script)
 
-1. Go to `/roster`, pick **ICU**, build a week's roster by assigning staff to shifts.
-2. Assign only 1–2 nurses to "ICU Morning" (needs 3) → see the ratio warning banner.
-3. Try assigning **A. Sharma** (seeded with an expired ACLS credential) to any shift →
-   see the credential block.
-4. Assign a staff member to two shifts less than 8h apart → see the rest-hour block.
-5. Go to `/leave/add`, submit a leave request for a staff member → go to `/leave`,
-   approve it → see the leave balance update.
-6. Go back to `/roster` and click **Publish Roster** while a shift is still understaffed →
-   see the publish block listing the shortfalls. Fill the gap, publish again → roster locks
-   (read-only, badge changes to "PUBLISHED").
 
 ## Known gaps (Phase 1 scope — by design)
 
