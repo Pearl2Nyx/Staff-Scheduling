@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Roster{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div>
+    <h1>Roster Grid</h1>
+    <p class="subtitle">FR-14 — plus live ratio &amp; rest-hour rule checks</p>
+  </div>
+  <form class="field" method="get" style="margin:0">
+    <select name="department_id" onchange="this.form.submit()">
+      {% for d in departments %}
+      <option value="{{ d.id }}" {% if department_id==d.id %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="toolbar">
+  <div>
+    <a class="btn btn-sm btn-secondary" href="{{ url_for('roster_grid', department_id=department_id, week_start=prev_week) }}">&larr; Prev week</a>
+    <strong>Week of {{ week_start }}</strong>
+    <a class="btn btn-sm btn-secondary" href="{{ url_for('roster_grid', department_id=department_id, week_start=next_week) }}">Next week &rarr;</a>
+  </div>
+  {% if version %}
+    {% if version.is_locked %}
+      <span class="badge badge-ok">PUBLISHED v{{ version.version_number }}</span>
+    {% else %}
+      <form method="post" action="{{ url_for('roster_publish', version_id=version.id) }}">
+        <button class="btn" type="submit">Publish Roster</button>
+      </form>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% if version and version.is_locked %}
+<div class="locked-banner">🔒 This roster is published and locked (v{{ version.version_number }}, {{ version.published_at }}). No further edits allowed.</div>
+{% endif %}
+
+{% if ratio_issues %}
+<div class="issue-box">
+  ⚠ Ratio rule — shifts below minimum staff:
+  <ul>
+    {% for i in ratio_issues %}
+    <li>{{ i.date }} — {{ i.shift }}: {{ i.count }}/{{ i.min }} assigned</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card roster-table">
+  <table>
+    <tr>
+      <th>Staff</th>
+      {% for d in days %}<th>{{ d.strftime('%a %d %b') }}</th>{% endfor %}
+    </tr>
+    {% for s in staff %}
+    <tr>
+      <td>{{ s.full_name }}</td>
+      {% for d in days %}
+      <td>
+        {% set entry = grid.get((s.id, d.isoformat())) %}
+        {% if entry %}
+          <span class="shift-tag shift-{{ entry.shift_type }}">{{ entry.shift_name }}</span>
+          {% if not version.is_locked %}
+          <form method="post" action="{{ url_for('roster_entry_remove', entry_id=entry.id) }}" style="display:inline">
+            <button class="btn btn-sm" style="background:transparent;color:#b3261e;padding:0 4px" title="Remove">✕</button>
+          </form>
+          {% endif %}
+        {% else %}
+          <span class="cell-empty">—</span>
+        {% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% else %}
+    <tr><td colspan="{{ days|length + 1 }}" class="small">No staff in this department.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% if version and not version.is_locked %}
+<div class="card">
+  <h2>Assign a shift</h2>
+  <form class="inline" method="post" action="{{ url_for('roster_entry_add') }}">
+    <input type="hidden" name="department_id" value="{{ department_id }}">
+    <input type="hidden" name="week_start" value="{{ week_start }}">
+    <div class="field">
+      <label>Staff</label>
+      <select name="staff_id" required>
+        {% for s in staff %}<option value="{{ s.id }}">{{ s.full_name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Shift</label>
+      <select name="shift_template_id" required>
+        {% for t in templates %}<option value="{{ t.id }}">{{ t.name }} ({{ t.start_time }}–{{ t.end_time }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <select name="shift_date" required>
+        {% for d in days %}<option value="{{ d.isoformat() }}">{{ d.strftime('%a %d %b') }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn" type="submit">Assign</button>
+  </form>
+  <p class="small">
+    Assignment is blocked immediately if the staff member has an expired mandatory credential,
+    or if it breaks the 8-hour minimum rest rule. Understaffed shifts (ratio rule) show a warning
+    here but only block at <strong>Publish</strong>.
+  </p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Leave Requests{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div>
+    <h1>Leave Requests</h1>
+    <p class="subtitle">FR-6</p>
+  </div>
+  <a class="btn" href="{{ url_for('leave_add') }}">+ Apply for Leave</a>
+</div>
+
+<table>
+  <tr><th>Staff</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th></th></tr>
+  {% for r in requests %}
+  <tr>
+    <td>{{ r.full_name }}</td>
+    <td>{{ r.leave_code }}</td>
+    <td>{{ r.start_date }}</td>
+    <td>{{ r.end_date }}</td>
+    <td>{{ r.reason or '—' }}</td>
+    <td>
+      {% if r.status=='pending' %}<span class="badge badge-warn">pending</span>
+      {% elif r.status=='approved' %}<span class="badge badge-ok">approved</span>
+      {% else %}<span class="badge badge-danger">rejected</span>{% endif %}
+    </td>
+    <td>
+      {% if r.status=='pending' %}
+      <form method="post" action="{{ url_for('leave_decide', request_id=r.id, decision='approve') }}" style="display:inline">
+        <button class="btn btn-sm">Approve</button>
+      </form>
+      <form method="post" action="{{ url_for('leave_decide', request_id=r.id, decision='reject') }}" style="display:inline">
+        <button class="btn btn-sm btn-danger">Reject</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="small">No leave requests yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

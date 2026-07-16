@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ staff.full_name }}{% endblock %}
+{% block content %}
+<h1>{{ staff.full_name }} <span class="small">({{ staff.employee_code }})</span></h1>
+<p class="subtitle">{{ staff.role }} · {{ staff.department_name }} · {{ staff.employment_type }}</p>
+
+{% if blocked %}
+<div class="issue-box" style="background:var(--danger-bg);border-color:#f2b8b4;color:var(--danger)">
+  ⚠ ROSTER-BLOCKED — expired {{ blocked.credential_type.upper() }} (expired {{ blocked.expiry_date }}).
+  This staff member cannot be assigned to any new shift until this credential is renewed.
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Credentials (FR-2)</h2>
+  <table>
+    <tr><th>Type</th><th>Number</th><th>Expiry</th><th>Status</th></tr>
+    {% for c in credentials %}
+    <tr>
+      <td>{{ c.credential_type }}</td>
+      <td>{{ c.credential_no }}</td>
+      <td>{{ c.expiry_date }}</td>
+      <td><span class="badge badge-{{ c.status|credential_badge }}">{{ c.status.replace('_',' ') }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="small">No credentials on file.</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Add credential</h2>
+  <form class="inline" method="post" action="{{ url_for('credential_add', staff_id=staff.id) }}">
+    <div class="field">
+      <label>Type</label>
+      <select name="credential_type">
+        {% for t in ['nmc_registration','nursing_council','bls','acls','pharmacist_licence'] %}
+        <option value="{{ t }}">{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Credential no.</label>
+      <input name="credential_no" required>
+    </div>
+    <div class="field">
+      <label>Expiry date</label>
+      <input type="date" name="expiry_date" required>
+    </div>
+    <button class="btn" type="submit">Add</button>
+  </form>
+</div>
+{% endblock %}

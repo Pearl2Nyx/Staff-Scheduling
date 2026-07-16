@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Apply for Leave{% endblock %}
+{% block content %}
+<h1>Apply for Leave</h1>
+<p class="subtitle">FR-6</p>
+
+<form class="card" method="post" style="max-width:480px">
+  <div class="field">
+    <label>Staff *</label>
+    <select name="staff_id" required>
+      {% for s in staff %}<option value="{{ s.id }}">{{ s.full_name }} ({{ s.employee_code }})</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label>Leave type *</label>
+    <select name="leave_type_id" required>
+      {% for t in leave_types %}<option value="{{ t.id }}">{{ t.code }} — {{ t.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label>Start date *</label>
+    <input type="date" name="start_date" required>
+  </div>
+  <div class="field">
+    <label>End date *</label>
+    <input type="date" name="end_date" required>
+  </div>
+  <div class="field">
+    <label>Reason</label>
+    <textarea name="reason" rows="2" style="width:100%"></textarea>
+  </div>
+  <button class="btn" type="submit">Submit Request</button>
+  <a class="btn btn-secondary" href="{{ url_for('leave_list') }}">Cancel</a>
+</form>
+<p class="small">If the dates overlap an already-published shift for that staff member, a warning is shown after submission (soft warning — request still goes to pending approval).</p>
+{% endblock %}

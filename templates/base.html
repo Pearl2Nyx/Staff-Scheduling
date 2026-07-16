@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Staff Scheduling{% endblock %} — PRD-06</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><a href="{{ url_for('home') }}">🏥 Staff Scheduling <span>Phase 1 MVP</span></a></div>
+  <nav>
+    <a href="{{ url_for('staff_list') }}">Staff</a>
+    <a href="{{ url_for('shift_template_list') }}">Shift Templates</a>
+    <a href="{{ url_for('roster_grid') }}">Roster</a>
+    <a href="{{ url_for('leave_list') }}">Leave</a>
+  </nav>
+</header>
+
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer>PRD-06 Clinical Staff Scheduling — Phase 1 (FR-1, FR-2, FR-3, FR-6, FR-14) — demo build</footer>
+</body>
+</html>

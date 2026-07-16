@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Staff Registry{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div>
+    <h1>Staff Registry</h1>
+    <p class="subtitle">FR-1</p>
+  </div>
+  <a class="btn" href="{{ url_for('staff_add') }}">+ Add Staff</a>
+</div>
+
+<form class="filters card" method="get">
+  <div class="field">
+    <label>Department</label>
+    <select name="department_id" onchange="this.form.submit()">
+      <option value="">All</option>
+      {% for d in departments %}
+      <option value="{{ d.id }}" {% if department_id==d.id %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label>Role</label>
+    <select name="role" onchange="this.form.submit()">
+      <option value="">All</option>
+      {% for r in ['nurse','resident','technician','consultant','dept_head'] %}
+      <option value="{{ r }}" {% if role==r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+<table>
+  <tr><th>Employee Code</th><th>Name</th><th>Role</th><th>Department</th><th>Type</th><th></th></tr>
+  {% for s in staff %}
+  <tr>
+    <td>{{ s.employee_code }}</td>
+    <td>{{ s.full_name }}</td>
+    <td>{{ s.role }}</td>
+    <td>{{ s.department_name }}</td>
+    <td>{{ s.employment_type }}</td>
+    <td><a class="btn btn-sm btn-secondary" href="{{ url_for('staff_profile', staff_id=s.id) }}">View</a></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="small">No staff found for this filter.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

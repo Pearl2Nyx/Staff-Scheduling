@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Add Staff{% endblock %}
+{% block content %}
+<h1>Add Staff</h1>
+<p class="subtitle">FR-1 — Staff registry</p>
+
+<form class="card" method="post" style="max-width:480px">
+  <div class="field">
+    <label>Employee code *</label>
+    <input name="employee_code" value="{{ form.get('employee_code','') }}" required>
+  </div>
+  <div class="field">
+    <label>Full name *</label>
+    <input name="full_name" value="{{ form.get('full_name','') }}" required>
+  </div>
+  <div class="field">
+    <label>Role *</label>
+    <select name="role" required>
+      {% for r in ['nurse','resident','technician','consultant','dept_head'] %}
+      <option value="{{ r }}" {% if form.get('role')==r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label>Department *</label>
+    <select name="department_id" required>
+      {% for d in departments %}
+      <option value="{{ d.id }}" {% if form.get('department_id')|string==d.id|string %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label>Employment type</label>
+    <select name="employment_type">
+      {% for t in ['permanent','contract','locum'] %}
+      <option value="{{ t }}" {% if form.get('employment_type')==t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn" type="submit">Save</button>
+  <a class="btn btn-secondary" href="{{ url_for('staff_list') }}">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Shift Templates{% endblock %}
+{% block content %}
+<h1>Shift Templates</h1>
+<p class="subtitle">FR-3</p>
+
+<form class="field" method="get" style="max-width:260px">
+  <label>Department</label>
+  <select name="department_id" onchange="this.form.submit()">
+    {% for d in departments %}
+    <option value="{{ d.id }}" {% if department_id==d.id %}selected{% endif %}>{{ d.name }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+<div class="card">
+  <table>
+    <tr><th>Name</th><th>Type</th><th>Start</th><th>End</th><th>Duration</th><th>Min staff required</th></tr>
+    {% for t in templates %}
+    <tr>
+      <td>{{ t.name }}</td>
+      <td><span class="shift-tag shift-{{ t.shift_type }}">{{ t.shift_type }}</span></td>
+      <td>{{ t.start_time }}</td>
+      <td>{{ t.end_time }}</td>
+      <td>{{ t.duration_hours }}h</td>
+      <td>{{ t.min_staff_required }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="small">No shift templates yet for this department.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>New template</h2>
+  <form class="inline" method="post" action="{{ url_for('shift_template_add') }}">
+    <input type="hidden" name="department_id" value="{{ department_id }}">
+    <div class="field"><label>Name</label><input name="name" required></div>
+    <div class="field">
+      <label>Shift type</label>
+      <select name="shift_type">
+        {% for t in ['morning','evening','night','on_call'] %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>Start time</label><input type="time" name="start_time" required></div>
+    <div class="field"><label>End time</label><input type="time" name="end_time" required></div>
+    <div class="field"><label>Min staff required</label><input type="number" name="min_staff_required" value="1" min="1" style="width:70px"></div>
+    <button class="btn" type="submit">Save</button>
+  </form>
+</div>
+{% endblock %}
