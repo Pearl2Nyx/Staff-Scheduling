@@ -1,71 +1,77 @@
- PRD-06 — Clinical Staff Scheduling (Phase-1 MVP)
+# P6 — Clinical Staff Scheduling (PRD-06) — Phase 1 MVP
 
-M2 deliverable (design freeze, per team sprint calendar): ERD, SQLite DDL, API/route list,
-5 low-fi wireframes, deterministic seeded dataset, walking-skeleton Flask repo.
+Flask + SQLite implementation of Phase-1 scope: **FR-1, FR-2, FR-3, FR-6, FR-14**, plus the
+two Phase-1 rule checks (ratio rule + rest-hour rule) from the M2 design doc.
 
-**Scope**: Phase-1 (●) requirements only, per PRD-06 §12 Phased Rollout:
-FR-1 (staff registry), FR-2 (credential registry), FR-3 (shift templates),
-FR-6 (leave management), FR-14 (roster publication). No solver, no rules engine,
-no swap marketplace, no acuity-linking, no resident-hours, no NABH export — those are
-Phase 2/3 (M3+).
-
-**Stack**: Python 3.9+ / Flask / SQLite / Chart.js (Chart.js is for the M3 analytics
-views — not yet wired, no frontend exists in M2).
-
-**AI features**: none in M2. Per PRD-06 §10, any GenAI feature (roster narrator, absence
-forecaster, policy Q&A, swap matchmaker) is advisory-only — no AI output writes to
-records without human confirmation. Not built in this milestone.
-
-## Repo layout
-
-```
-schema.sql               SQLite DDL (source of truth for the ERD)
-docs/ERD.md               Mermaid ERD + design notes
-docs/API_ROUTES.md         Full Phase-1 route contract (LIVE vs STUB)
-seed.py                   Deterministic sample data (10 staff, 4 depts, 6 credentials incl.
-                           1 expired + 1 expiring-soon, 6 shift templates, leave data, 1 roster week)
-app.py                     Flask app — Staff Registry (FR-1) is the one LIVE end-to-end
-                           flow required for M2; everything else in the route contract
-                           is registered as a 501 stub so M3 has a fixed API to build against
-wireframes/                5 SVG low-fi wireframes (registry, credentials, shift templates,
-                           leave form, roster publish/calendar)
-requirements.txt
-```
-
-## Run it
+## Setup
 
 ```bash
-pip install -r requirements.txt
-python3 seed.py          # (re)builds prd06.db from schema.sql + fixed sample data
-python3 -m flask --app app run --port 5000
+pip install flask
+python app.py
 ```
 
-Then:
+Then open **http://127.0.0.1:5000** in a browser.
 
-```bash
-curl http://127.0.0.1:5000/health
-curl http://127.0.0.1:5000/api/v1/staff
-curl -X POST http://127.0.0.1:5000/api/v1/staff \
-  -H "Content-Type: application/json" \
-  -d '{"employee_code":"EMP011","full_name":"Test Nurse","role":"nurse","department_id":1}'
-curl http://127.0.0.1:5000/api/v1/staff/11
+The database (`roster.db`) is created and seeded automatically the first time you run the app.
+Delete `roster.db` and re-run to reset to fresh demo data.
+
+## What's implemented
+
+| Screen | FR | Route |
+|---|---|---|
+| Staff Registry | FR-1 | `/staff`, `/staff/add` |
+| Credential Registry | FR-2 | `/staff/<id>` (Credentials tab) |
+| Shift Templates | FR-3 | `/shift-templates` |
+| Leave Management | FR-6 | `/leave`, `/leave/add` |
+| Roster Grid + Publish | FR-14 | `/roster` |
+
+## Rule checks implemented
+
+1. **Credential hard block** — a staff member with any `expired` credential cannot be
+   assigned to a new roster entry. Shown as a red banner on their profile and blocks the
+   assignment attempt with an error message.
+2. **Rest-hour rule (hard block)** — a new shift is rejected immediately if it gives the
+   staff member less than **8 hours** rest from an adjacent shift (day before/after),
+   including correct handling of overnight shifts.
+3. **Ratio rule (warn → block)** — each shift template has a `min_staff_required`. Assigning
+   fewer than that shows a **warning** while the roster is still a draft. Trying to
+   **publish** a roster with any shift still below minimum is **blocked** — the publish
+   button lists exactly which shift/date combinations are short.
+
+## Demo script (matches the M4 milestone script)
+
+1. Go to `/roster`, pick **ICU**, build a week's roster by assigning staff to shifts.
+2. Assign only 1–2 nurses to "ICU Morning" (needs 3) → see the ratio warning banner.
+3. Try assigning **A. Sharma** (seeded with an expired ACLS credential) to any shift →
+   see the credential block.
+4. Assign a staff member to two shifts less than 8h apart → see the rest-hour block.
+5. Go to `/leave/add`, submit a leave request for a staff member → go to `/leave`,
+   approve it → see the leave balance update.
+6. Go back to `/roster` and click **Publish Roster** while a shift is still understaffed →
+   see the publish block listing the shortfalls. Fill the gap, publish again → roster locks
+   (read-only, badge changes to "PUBLISHED").
+
+## Known gaps (Phase 1 scope — by design)
+
+- No authentication/login — role-based UI is described in the design doc but not enforced
+  at the request level in this build (this is out of Phase-1 scope; FR-4 rules engine and
+  role-based auth arrive in Phase 2/3 of the full PRD).
+- Notifications (FR-14) are logged to the `notifications` table but not actually sent via
+  app/WhatsApp/SMS (stubbed — real dispatch is out of scope for a local demo).
+- Credential status (valid/expiring_soon/expired) is computed once at creation time based
+  on the expiry date typed in; it does not re-evaluate daily on a schedule (would need a
+  cron/scheduler, out of scope for Phase 1).
+- Only one ratio rule and one hour-rule are implemented, per the milestone brief
+  ("one ratio rule + one hour-rule chosen") — the full FR-4 rules engine (skill-mix,
+  weekly-hour caps, etc.) is Phase 2/3.
+
+## File structure
+
 ```
-
-## M2 exit criteria (met)
-
-- [x] App boots (`flask run` starts clean, `/health` returns 200)
-- [x] One end-to-end flow works against seeded data: create staff → list staff → staff detail
-- [x] Final ERD + DDL (`schema.sql`, `docs/ERD.md`)
-- [x] Full API/route list for Phase-1 scope (`docs/API_ROUTES.md`)
-- [x] 5 wireframes covering all Phase-1 FRs (`wireframes/`)
-- [x] Seeded sample dataset, deterministic (`seed.py`)
-
-## Carried forward to M3 (build checkpoint)
-
-- Implement the remaining STUB routes: credentials, shift templates, roster entries/publish
-  (incl. version-lock enforcement), leave requests/balances, notifications.
-- Enforce roster-version immutability at the write layer (schema supports it via
-  `roster_versions.is_locked`; not yet checked in `app.py`).
-- DPDP masking of leave `reason` field from non-HR roles — needs an auth/role layer,
-  out of scope until M3.
-- Credential `status` recompute job (currently static at seed time).
+app.py               Flask application, all routes, both rule-check functions
+schema.sql            SQLite DDL (12 tables)
+seed.sql              Demo seed data (includes 1 deliberately expired credential and
+                       1 deliberately understaffed shift template, for the demo script)
+templates/            Jinja2 HTML templates (server-rendered, no JS framework needed)
+static/style.css      Styling
+```
